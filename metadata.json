@@ -1,0 +1,6 @@
+{
+  "name": "Aulia Olshop",
+  "description": "Marketplace application with Red, White, and Purple silhouette aesthetics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
