@@ -9,9 +9,10 @@ export default function AddProductForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const form = e.currentTarget;
     
     try {
-      const formData = new FormData(e.currentTarget);
+      const formData = new FormData(form);
       
       // Simulasi panggilan Next.js Server Action
       // await addProductAction(formData);
@@ -19,9 +20,10 @@ export default function AddProductForm() {
       await new Promise(resolve => setTimeout(resolve, 1500)); // Mock delay
       alert('Produk berhasil ditambahkan ke keranjang katalog toko Anda!');
       
-      e.currentTarget.reset();
+      form.reset();
       setImagePreview(null);
     } catch (error) {
+      console.error(error);
       alert('Gagal menambahkan produk.');
     } finally {
       setIsSubmitting(false);

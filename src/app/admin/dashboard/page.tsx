@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { 
-  Users, Store, CheckCircle, XCircle, ChevronRight, 
-  ChevronDown, DollarSign, Activity, ShieldCheck, Award, Info, 
+  Users, Store, CheckCircle, XCircle, DollarSign, ShieldCheck, Info, 
   ArrowRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -22,96 +21,8 @@ const MOCK_PENDING_STORES = [
   { id: '3', storeName: 'Kopi Abah Pi', owner: 'abah_kopipi', appliedAt: '2026-05-22 10:05', status: 'pending' }
 ];
 
-interface MLMNode {
-  username: string;
-  totalDownlines: number;
-  totalSales?: number;
-  children?: MLMNode[];
-}
-
-const MOCK_MLM_TREE: MLMNode[] = [
-  {
-    username: 'PhiNusantara',
-    totalDownlines: 1560,
-    totalSales: 8500,
-    children: [
-      {
-        username: 'budi_pi',
-        totalDownlines: 45,
-        totalSales: 120,
-        children: [
-          { username: 'andi123', totalDownlines: 2, totalSales: 0 },
-          { username: 'citra_k', totalDownlines: 10, totalSales: 45 }
-        ]
-      },
-      {
-        username: 'siti_pi',
-        totalDownlines: 120,
-        totalSales: 950,
-        children: [
-          { username: 'dewi_olshop', totalDownlines: 55, totalSales: 300 }
-        ]
-      }
-    ]
-  }
-];
-
-// Tree Node Component
-const MLMTreeNode = ({ node, level = 0 }: { node: MLMNode, level?: number }) => {
-  const [isOpen, setIsOpen] = useState(level < 2); // default open first two levels
-  const hasChildren = node.children && node.children.length > 0;
-
-  return (
-    <div className="ml-2 sm:ml-4 first:ml-0">
-      <div 
-        className={`flex items-center py-1.5 px-2 my-1.5 rounded border border-transparent transition-colors ${hasChildren ? 'cursor-pointer hover:bg-purple-50 hover:border-purple-200' : ''}`}
-        onClick={() => hasChildren && setIsOpen(!isOpen)}
-        style={{ paddingLeft: `${level * 1.0}rem` }}
-      >
-        <div className="w-6 flex justify-center mr-1">
-          {hasChildren ? (
-            isOpen ? <ChevronDown size={18} className="text-purple-600" /> : <ChevronRight size={18} className="text-purple-400" />
-          ) : (
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-          )}
-        </div>
-        <div className="flex-1 flex justify-between items-center bg-white border border-gray-100 rounded shadow-sm px-3 py-2 hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-full ${level === 0 ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>
-               <Users size={14} />
-            </div>
-            <span className={`text-sm ${level === 0 ? 'text-gray-900 font-bold' : 'text-gray-700 font-medium'}`}>
-              @{node.username}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <Activity size={10} />
-              {node.totalDownlines} Downline
-            </div>
-            {node.totalSales !== undefined && (
-              <div className="text-[11px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full flex items-center hidden sm:flex">
-                π {node.totalSales}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {isOpen && hasChildren && (
-        <div className="border-l-2 border-purple-100/50 ml-[23px] pl-1 mt-1 transition-all">
-          {node.children!.map((child, idx) => (
-            <MLMTreeNode key={idx} node={child} level={level + 1} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'verifications' | 'mlm'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'verifications'>('overview');
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 relative font-sans">
@@ -131,7 +42,7 @@ export default function AdminDashboard() {
               <ShieldCheck size={32} />
               Superadmin Portal
             </h1>
-            <p className="text-purple-100 mt-1 font-medium">Marketplace Pi Network & MLM Tracker</p>
+            <p className="text-purple-100 mt-1 font-medium">Marketplace Pi Network</p>
           </div>
           
           {/* Admin Navigation Pills */}
@@ -147,12 +58,6 @@ export default function AdminDashboard() {
               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'verifications' ? 'bg-white text-purple-900 shadow-md' : 'text-white hover:bg-white/10'}`}
             >
               Verifikasi Toko
-            </button>
-            <button 
-              onClick={() => setActiveTab('mlm')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'mlm' ? 'bg-white text-purple-900 shadow-md' : 'text-white hover:bg-white/10'}`}
-            >
-              Jaringan MLM
             </button>
           </div>
         </div>
@@ -219,7 +124,7 @@ export default function AdminDashboard() {
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: activeTab === 'overview' || activeTab === 'verifications' ? 1 : 0 }} 
-            className={`bg-white rounded-2xl shadow-xl shadow-purple-900/5 border border-purple-50 overflow-hidden ${activeTab === 'mlm' ? 'hidden' : 'block lg:col-span-1'}`}
+            className={`bg-white rounded-2xl shadow-xl shadow-purple-900/5 border border-purple-50 overflow-hidden lg:col-span-2`}
           >
             <div className="bg-gray-50/80 px-6 py-5 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -262,30 +167,6 @@ export default function AdminDashboard() {
                <button className="text-sm font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 w-full justify-center">
                  Lihat Seluruh Pengajuan <ArrowRight size={16} />
                </button>
-            </div>
-          </motion.div>
-
-          {/* MLM Tree Viewer Section */}
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: activeTab === 'overview' || activeTab === 'mlm' ? 1 : 0 }} 
-            className={`bg-white rounded-2xl shadow-xl shadow-purple-900/5 border border-purple-50 overflow-hidden ${activeTab === 'verifications' ? 'hidden' : 'block lg:col-span-1'}`}
-          >
-            <div className="bg-gray-50/80 px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <Award className="text-purple-600" size={20} />
-                  Visualisasi Pohon MLM
-                </h2>
-                <p className="text-xs text-gray-500 mt-1">Struktur Upline-Downline Global</p>
-              </div>
-            </div>
-            <div className="p-6 h-[400px] overflow-y-auto">
-              <div className="bg-purple-50/50 rounded-xl p-4 border border-purple-100/50">
-                {MOCK_MLM_TREE.map((root, idx) => (
-                  <MLMTreeNode key={idx} node={root} level={0} />
-                ))}
-              </div>
             </div>
           </motion.div>
           

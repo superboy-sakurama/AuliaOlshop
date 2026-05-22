@@ -127,7 +127,6 @@ export default function Navbar({ onNavigate, cartCount = 2 }: NavbarProps) {
         {/* Quick Links */}
         <div className="hidden sm:flex items-center gap-4 mt-3 text-xs text-rose-100 font-medium">
           <button onClick={() => handleCategoryFilter('Topup')} className="hover:text-white transition-colors focus:outline-none cursor-pointer">Pi Network Topup</button>
-          <button onClick={() => handleCategoryFilter('MLM')} className="hover:text-white transition-colors focus:outline-none cursor-pointer">Jaringan MLM Saya</button>
           <button onClick={() => handleCategoryFilter('Flash Sale')} className="hover:text-white transition-colors focus:outline-none cursor-pointer">Flash Sale</button>
           <button onClick={() => handleCategoryFilter('Elektronik')} className="hover:text-white transition-colors focus:outline-none cursor-pointer">Elektronik</button>
           <button onClick={() => handleCategoryFilter('Fashion Wanita')} className="hover:text-white transition-colors focus:outline-none cursor-pointer">Fashion Wanita</button>

@@ -43,10 +43,9 @@ export async function POST(req: Request) {
       // LOGIKA RELEASE ESCROW
       // 1. Panggil RPC Supabase release_escrow_and_distribute(orderId)
       //    - Mengubah status pesanan jadi COMPLETED
-      //    - Membagikan 9% Pi ke upline (MLM Distribusi)
       //    - Menyisakan Pi masuk ke `pi_balance` internal pemilik toko
       
-      console.log(`[Escrow] Dana pesanan ${orderId} dilepaskan! Penjual & MLM menerima saldo Pi internal.`);
+      console.log(`[Escrow] Dana pesanan ${orderId} dilepaskan! Penjual menerima saldo Pi internal.`);
       return NextResponse.json({ message: 'Escrow Released, Pi Distributed' }, { status: 200 });
     }
 

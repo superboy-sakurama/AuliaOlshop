@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS wallet_history (
 
 -- ==============================================================================
 -- FUNGSI RPC: process_marketplace_escrow
--- Tujuan: Mengeksekusi penyelesaian pesanan, pemotongan platform fee,
---         pembagian komisi MLM secara dinamis, dan merekam audit trail mutasi.
+-- Tujuan: Mengeksekusi penyelesaian pesanan, pemotongan platform fee (2%),
+--         dan merekam audit trail mutasi.
 --         Dilindungi dengan Row-Level Locking (ACID) dan COALESCE untuk keamanan.
 -- ==============================================================================
 CREATE OR REPLACE FUNCTION process_marketplace_escrow(order_id_param UUID)
@@ -29,13 +29,6 @@ DECLARE
     v_shop_id UUID;
     v_total_payment NUMERIC(18, 6);
     
-    v_upline1_id UUID;
-    v_upline2_id UUID;
-    v_upline3_id UUID;
-    
-    v_comm_lvl1 NUMERIC(18, 6);
-    v_comm_lvl2 NUMERIC(18, 6);
-    v_comm_lvl3 NUMERIC(18, 6);
     v_seller_net NUMERIC(18, 6);
 BEGIN
     -- 1. Mengunci baris (Row-Level Locking) pada tabel transactions
@@ -59,37 +52,13 @@ BEGIN
     v_total_payment := v_transaction.amount;
 
     -- 2. Menghitung distribusi dana
-    -- - 90% Dana Bersih Penjual
-    -- - 10% Platform Fee Maksimum
-    --   - L1 = 5%, L2 = 3%, L3 = 2% (Sisa fee platform yang tidak terdistribusi otomatis hangus/milik platform)
-    v_seller_net := v_total_payment * 0.90;
-    v_comm_lvl1 := v_total_payment * 0.05;
-    v_comm_lvl2 := v_total_payment * 0.03;
-    v_comm_lvl3 := v_total_payment * 0.02;
+    -- - 98% Dana Bersih Penjual
+    -- - 2% Platform Fee
+    v_seller_net := v_total_payment * 0.98;
 
-    -- 3. Mencari Upline Hirarkis (Tabel mlm_network)
-    SELECT upline_id INTO v_upline1_id 
-    FROM mlm_network 
-    WHERE downline_id = v_buyer_id 
-    LIMIT 1;
-
-    IF v_upline1_id IS NOT NULL THEN
-        SELECT upline_id INTO v_upline2_id 
-        FROM mlm_network 
-        WHERE downline_id = v_upline1_id 
-        LIMIT 1;
-    END IF;
-
-    IF v_upline2_id IS NOT NULL THEN
-        SELECT upline_id INTO v_upline3_id 
-        FROM mlm_network 
-        WHERE downline_id = v_upline2_id 
-        LIMIT 1;
-    END IF;
-
-    -- 4. Distribusi Saldo (Tabel users & shops) & Audit Trail (Tabel wallet_history)
+    -- 3. Distribusi Saldo (Tabel shops) & Audit Trail (Tabel wallet_history)
     
-    -- Pencairan komponen Net 90% milik Toko (COALESCE melindung saldo NULL)
+    -- Pencairan komponen Net 98% milik Toko (COALESCE melindung saldo NULL)
     UPDATE shops 
     SET balance = COALESCE(balance, 0) + v_seller_net 
     WHERE id = v_shop_id;
@@ -98,31 +67,7 @@ BEGIN
     INSERT INTO wallet_history (shop_id, amount, transaction_type, reference_order_id)
     VALUES (v_shop_id, v_seller_net, 'Penjualan', order_id_param);
 
-    -- Eksekusi Komisi Lvl 1 (bila ada)
-    IF v_upline1_id IS NOT NULL THEN
-        UPDATE users SET pi_balance = COALESCE(pi_balance, 0) + v_comm_lvl1 WHERE id = v_upline1_id;
-        
-        INSERT INTO wallet_history (user_id, amount, transaction_type, reference_order_id)
-        VALUES (v_upline1_id, v_comm_lvl1, 'Komisi MLM Lvl 1', order_id_param);
-    END IF;
-    
-    -- Eksekusi Komisi Lvl 2 (bila ada)
-    IF v_upline2_id IS NOT NULL THEN
-        UPDATE users SET pi_balance = COALESCE(pi_balance, 0) + v_comm_lvl2 WHERE id = v_upline2_id;
-        
-        INSERT INTO wallet_history (user_id, amount, transaction_type, reference_order_id)
-        VALUES (v_upline2_id, v_comm_lvl2, 'Komisi MLM Lvl 2', order_id_param);
-    END IF;
-
-    -- Eksekusi Komisi Lvl 3 (bila ada)
-    IF v_upline3_id IS NOT NULL THEN
-        UPDATE users SET pi_balance = COALESCE(pi_balance, 0) + v_comm_lvl3 WHERE id = v_upline3_id;
-        
-        INSERT INTO wallet_history (user_id, amount, transaction_type, reference_order_id)
-        VALUES (v_upline3_id, v_comm_lvl3, 'Komisi MLM Lvl 3', order_id_param);
-    END IF;
-
-    -- 5. Perubahan Status Akhir
+    -- 4. Perubahan Status Akhir
     UPDATE transactions 
     SET status = 'Selesai', updated_at = NOW() 
     WHERE id = order_id_param;
@@ -130,6 +75,6 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         -- Apabila ada kegagalan SQL maka state dikembalikan ke semula (Automatic Rollback)
-        RAISE EXCEPTION 'Gagal memproses platform fee escrow & MLM: %', SQLERRM;
+        RAISE EXCEPTION 'Gagal memproses platform fee escrow: %', SQLERRM;
 END;
 $$;

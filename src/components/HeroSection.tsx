@@ -1,7 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  onShopNow?: () => void;
+}
+
+export default function HeroSection({ onShopNow }: HeroSectionProps) {
   return (
     <div className="relative w-full h-[380px] sm:h-[450px] lg:h-[500px] bg-brand-white rounded-2xl p-6 sm:p-10 flex items-center justify-between overflow-hidden shadow-purple-glow my-6">
       
@@ -36,6 +40,11 @@ export default function HeroSection() {
            whileHover={{ scale: 1.05 }}
            whileTap={{ scale: 0.95 }}
            transition={{ delay: 0.4 }}
+           onClick={() => {
+             if (onShopNow) return onShopNow();
+             // default behavior to scroll
+             document.getElementById('product-grid-section')?.scrollIntoView({ behavior: 'smooth' });
+           }}
            className="bg-brand-red text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-rose-700 transition-colors shadow-purple-glow flex items-center gap-2"
          >
            Belanja Sekarang 

@@ -59,22 +59,7 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
         };
 
         setUser(piUserData);
-
-        // -- Baca Pending Referral Code (MLM Tracker) --
-        let referralCode = null;
-        if (typeof window !== 'undefined') {
-          referralCode = localStorage.getItem('pendingReferral');
-        }
-
-        // Jalankan sinkronisasi Server Action Next.js di latar belakang
-        const result = await registerOrLoginUser(piUserData, referralCode);
-
-        // Jika registrasi sukses & referral dikirim, kita bisa berishkan localStorage
-        if (result.success && referralCode) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('pendingReferral');
-          }
-        }
+        await registerOrLoginUser(piUserData);
         
       } else {
         throw new Error("Pi SDK belum terinisialisasi atau tidak ditemukan.");

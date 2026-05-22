@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     if (rpcError) {
       console.error('Supabase RPC Error (Process Escrow):', rpcError);
-      throw new Error(`Gagal memproses escrow dan MLM: ${rpcError.message}`);
+      throw new Error(`Gagal memproses escrow: ${rpcError.message}`);
     }
 
     // Mengupdate txid pesanan sebagai cadangan pelacakan tambahan

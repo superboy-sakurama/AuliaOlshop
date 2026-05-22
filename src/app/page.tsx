@@ -62,7 +62,7 @@ export default function Page() {
           <div className="fade-in-container">
             <HeroSection />
             
-            <section className="mt-8 pt-4">
+            <section id="product-grid-section" className="mt-8 pt-4">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 Produk Pilihan Hari Ini
               </h2>

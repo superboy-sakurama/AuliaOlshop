@@ -1,7 +1,6 @@
 import React from "react";
 import "./globals.css";
 import PiAuthProvider from "../components/providers/PiAuthProvider";
-import ReferralTracker from "../components/providers/ReferralTracker";
 
 export const metadata = {
   title: "Pi Network Marketplace",
@@ -16,7 +15,6 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="antialiased font-sans bg-gray-50 text-gray-900">
-        <ReferralTracker />
         <PiAuthProvider>
           {children}
         </PiAuthProvider>
