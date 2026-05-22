@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, Store, Minus, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
-import { authenticatePiUser, createPiPayment } from '../lib/pi-sdk';
+import CheckoutButton from './CheckoutButton';
 
 // Mock data to simulate fetching from Supabase
 const initialCartItems = [
@@ -33,33 +33,6 @@ const initialCartItems = [
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState(initialCartItems);
-  const [isProcessingPi, setIsProcessingPi] = useState(false);
-  const [piUser, setPiUser] = useState<any>(null);
-
-  const handlePiCheckout = async () => {
-    setIsProcessingPi(true);
-    try {
-      // 1. Autentikasi Pengguna
-      let currentUser = piUser;
-      if (!currentUser) {
-        currentUser = await authenticatePiUser();
-        setPiUser(currentUser);
-      }
-
-      // 2. Inisiasi Pembayaran menggunakan Pi
-      const memo = "Pembelian Aulia Olshop";
-      const orderId = `ORD-${Date.now()}`; // Mock Order ID
-      
-      const payment = await createPiPayment(selectedTotal, memo, orderId);
-      
-      alert(`Berhasil meluncurkan SDK Pembayaran: ${payment?.identifier || 'Berhasil'}`);
-    } catch (error) {
-      alert("Kesalahan memproses pembayaran Pi (Pastikan dibuka di Pi Browser/Sandbox)");
-      console.error(error);
-    } finally {
-      setIsProcessingPi(false);
-    }
-  };
 
   const toggleSelect = (id: string) => {
     setCartItems(items => items.map(item => 
@@ -187,21 +160,11 @@ export default function CartPage() {
               <div className="text-xs text-purple-600 text-right mt-1 font-medium">Saldo Anda: 1,500.20 Pi</div>
             </div>
 
-            <button 
-              disabled={selectedCount === 0 || isProcessingPi}
-              onClick={handlePiCheckout}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-white transition-all shadow-purple-glow ${
-                selectedCount === 0 || isProcessingPi
-                  ? 'bg-gray-300 cursor-not-allowed shadow-none' 
-                  : 'bg-brand-red hover:bg-rose-700 hover:scale-[1.02] active:scale-95'
-              }`}
-            >
-              {isProcessingPi ? (
-                <span className="flex items-center gap-2">Memproses <span className="animate-pulse">...</span></span>
-              ) : (
-                <span>Bayar dengan Pi ({selectedCount})</span>
-              )}
-            </button>
+            <CheckoutButton 
+              amount={selectedTotal} 
+              orderId={`ORD-${Date.now()}`} 
+              itemCount={selectedCount} 
+            />
           </div>
         </div>
       </div>
