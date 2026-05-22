@@ -1,5 +1,34 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Star, Upload, Send } from 'lucide-react';
+
+/**
+ * PANDUAN NEXT.JS SERVER ACTION UNTUK REVIEWS:
+ * Di dalam folder actions (misal: /src/app/actions/reviewActions.ts):
+ * 
+ * ```typescript
+ * 'use server';
+ * import { createClient } from '@/utils/supabase/server';
+ * import { revalidatePath } from 'next/cache';
+ * 
+ * export async function insertProductReview({ productId, orderId, rating, comment, imageUrl }) {
+ *   const supabase = createClient();
+ *   const { data, error } = await supabase
+ *     .from('reviews')
+ *     .insert({
+ *       product_id: productId,
+ *       order_id: orderId,
+ *       rating,
+ *       comment,
+ *       image_url: imageUrl
+ *     });
+ *   if (error) throw error;
+ *   revalidatePath(`/products/${productId}`);
+ *   return { success: true };
+ * }
+ * ```
+ */
 
 export default function ReviewForm({ productId, orderId }: { productId: string, orderId: string }) {
   const [rating, setRating] = useState(0);
@@ -7,21 +36,21 @@ export default function ReviewForm({ productId, orderId }: { productId: string, 
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Validasi input: Tombol kirim ulasan nonaktif jika rating belum dipilih atau ulasan kosong
+  const isValid = rating > 0 && comment.trim().length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) {
-      alert('Pilih rating bintang terlebih dahulu!');
-      return;
-    }
+    if (!isValid) return;
     
     setIsSubmitting(true);
     // Simulasi pengiriman data ke Next.js Server Action / API Route
     setTimeout(() => {
       setIsSubmitting(false);
+      alert(`Berhasil mengirimkan ulasan (Simulasi Server Action Supabase)!\nRating: ${rating} Bintang\nKomentar: "${comment}"`);
       setRating(0);
       setComment('');
       setHoveredRating(0);
-      alert('Ulasan Anda berhasil dikirim! Terima kasih.');
     }, 1500);
   };
 
@@ -31,7 +60,10 @@ export default function ReviewForm({ productId, orderId }: { productId: string, 
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Penilaian Produk</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Penilaian Produk <span className="text-brand-red">*</span>
+          </label>
+          <p className="text-xs text-gray-500 mb-2">Klik ikon bintang untuk memberikan peringkat</p>
           <div className="flex items-center gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -53,7 +85,9 @@ export default function ReviewForm({ productId, orderId }: { productId: string, 
         </div>
 
         <div>
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">Tulis Pengalaman Anda</label>
+          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
+            Tulis Pengalaman Anda <span className="text-brand-red">*</span>
+          </label>
           <textarea
             id="comment"
             rows={4}
@@ -75,11 +109,13 @@ export default function ReviewForm({ productId, orderId }: { productId: string, 
         <div className="pt-4 border-t border-gray-100 flex justify-end">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold text-white transition-all shadow-purple-glow ${
-              isSubmitting 
-                ? 'bg-gray-400 cursor-not-allowed shadow-none' 
-                : 'bg-brand-red hover:bg-rose-700 hover:scale-[1.02] active:scale-95'
+            disabled={!isValid || isSubmitting}
+            className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold text-white transition-all ${
+              !isValid 
+                ? 'bg-gray-300 cursor-not-allowed shadow-none text-gray-500 border border-gray-200' 
+                : isSubmitting
+                ? 'bg-gray-400 cursor-not-allowed shadow-none'
+                : 'bg-brand-red hover:bg-rose-700 hover:scale-[1.02] active:scale-95 shadow-purple-glow'
             }`}
           >
             {isSubmitting ? (

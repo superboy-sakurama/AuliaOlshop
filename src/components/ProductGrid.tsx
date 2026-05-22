@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { ShoppingCart, Star } from 'lucide-react';
 
@@ -13,11 +15,12 @@ export interface Product {
 
 interface ProductGridProps {
   products: Product[];
+  onAddToCart?: (product: Product) => void;
 }
 
-export default function ProductGrid({ products }: ProductGridProps) {
+export default function ProductGrid({ products, onAddToCart }: ProductGridProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 font-sans">
       {products.map((product) => (
         <div 
           key={product.id} 
@@ -69,7 +72,13 @@ export default function ProductGrid({ products }: ProductGridProps) {
               </div>
 
               {/* Action Button */}
-              <button className="w-full mt-3 bg-white border border-brand-red text-brand-red py-1.5 rounded-md text-xs font-semibold group-hover:bg-brand-red group-hover:text-white transition-colors duration-300 flex items-center justify-center gap-1">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onAddToCart) onAddToCart(product);
+                }}
+                className="w-full mt-3 bg-white border border-brand-red text-brand-red py-1.5 rounded-md text-xs font-semibold group-hover:bg-brand-red group-hover:text-white transition-colors duration-300 flex items-center justify-center gap-1 active:scale-95"
+              >
                 <ShoppingCart size={14} />
                 Beli
               </button>
