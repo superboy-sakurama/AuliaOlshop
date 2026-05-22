@@ -3,27 +3,13 @@
 import React from 'react';
 import { Search, ShoppingCart, User, Bell, Store } from 'lucide-react';
 import { usePiAuth } from './providers/PiAuthProvider';
-
-/**
- * PANDUAN NEXT.JS DEVELOPER:
- * Untuk navigasi antarmuka yang mulus tanpa reload halaman di Next.js App Router,
- * Anda dapat menggunakan `useRouter` dari `next/navigation` seperti contoh di bawah ini:
- * 
- * ```typescript
- * import { useRouter } from 'next/navigation';
- * 
- * const router = useRouter();
- * // Navigasi ke halaman detail tanpa reload halaman:
- * router.push(`/products/${productId}`);
- * ```
- */
+import Link from 'next/link';
 
 interface NavbarProps {
-  onNavigate?: (page: 'home' | 'cart' | 'seller') => void;
   cartCount?: number;
 }
 
-export default function Navbar({ onNavigate, cartCount = 2 }: NavbarProps) {
+export default function Navbar({ cartCount = 2 }: NavbarProps) {
   const { user, isAuthenticated, loginPiUser, error } = usePiAuth();
 
   // Simulasi penanganan filter kategori (pada project Next.js asli akan menggunakan route query/state)
@@ -44,15 +30,15 @@ export default function Navbar({ onNavigate, cartCount = 2 }: NavbarProps) {
             
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center">
-              <button 
-                onClick={() => onNavigate?.('home')}
+              <Link 
+                href="/"
                 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2 text-shadow-purple focus:outline-none"
               >
                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-brand-red shadow-purple-glow">
                    <ShoppingCart size={18} />
                  </div>
                  Aulia Olshop
-              </button>
+              </Link>
             </div>
             
             {/* Search Bar */}
@@ -75,21 +61,21 @@ export default function Navbar({ onNavigate, cartCount = 2 }: NavbarProps) {
                 <Bell size={22} className="sm:w-6 sm:h-6" />
                 <span className="absolute -top-1.5 -right-1.5 bg-purple-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center ring-2 ring-brand-red">3</span>
               </button>
-              <button 
-                onClick={() => onNavigate?.('cart')}
+              <Link 
+                href="/cart"
                 className="relative text-white hover:text-purple-200 transition-colors focus:outline-none"
               >
                 <ShoppingCart size={22} className="sm:w-6 sm:h-6" />
                 <span className="absolute -top-1.5 -right-1.5 bg-purple-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center ring-2 ring-brand-red shadow-purple-glow">{cartCount}</span>
-              </button>
+              </Link>
               <div className="w-px h-6 bg-white/30 hidden sm:block"></div>
-              <button 
-                onClick={() => onNavigate?.('seller')}
+              <Link 
+                href="/seller"
                 className="flex items-center gap-2 text-white hover:text-purple-200 transition-colors focus:outline-none bg-black/10 px-3 py-1.5 rounded-full"
               >
                 <Store size={14} />
                 <span className="text-xs font-medium">Toko Saya</span>
-              </button>
+              </Link>
               
               {isAuthenticated ? (
                 <button className="flex items-center gap-2 hover:text-purple-200 transition-colors focus:outline-none">

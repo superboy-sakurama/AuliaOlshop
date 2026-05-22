@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Upload, Plus, Info } from 'lucide-react';
 // import { addProductAction } from '@/app/actions/sellerActions'; // Simulasi Next.js Server Action

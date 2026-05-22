@@ -4,9 +4,6 @@ import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import ProductGrid, { Product } from '../components/ProductGrid';
-import CartPage from '../components/CartPage';
-import SellerLayout from '../components/seller/SellerLayout';
-import AddProductForm from '../components/seller/AddProductForm';
 import ReviewForm from '../components/reviews/ReviewForm';
 import ProductReviewsList from '../components/reviews/ProductReviewsList';
 
@@ -27,7 +24,6 @@ const mockProducts: Product[] = [
 ];
 
 export default function Page() {
-  const [currentView, setCurrentView] = useState<'home' | 'cart' | 'seller'>('home');
   const [cartCount, setCartCount] = useState(2);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -43,49 +39,33 @@ export default function Page() {
     }, 3500);
   };
 
-  if (currentView === 'seller') {
-    return (
-      <SellerLayout onNavigate={setCurrentView}>
-        <div className="fade-in-container">
-          <AddProductForm />
-        </div>
-      </SellerLayout>
-    );
-  }
-
   return (
     <div className="flex flex-col relative w-full">
-      <Navbar onNavigate={setCurrentView} cartCount={cartCount} />
+      <Navbar cartCount={cartCount} />
       
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {currentView === 'home' ? (
-          <div className="fade-in-container">
-            <HeroSection />
-            
-            <section id="product-grid-section" className="mt-8 pt-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                Produk Pilihan Hari Ini
-              </h2>
-              <ProductGrid products={mockProducts} onAddToCart={handleAddToCart} />
-            </section>
+        <div className="fade-in-container">
+          <HeroSection />
+          
+          <section id="product-grid-section" className="mt-8 pt-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              Produk Pilihan Hari Ini
+            </h2>
+            <ProductGrid products={mockProducts} onAddToCart={handleAddToCart} />
+          </section>
 
-            <section className="mt-12 pt-8 border-t border-gray-200">
-              <div className="mb-6">
-                <span className="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Fitur Baru Keamanan Ulasan</span>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">Ulasan Pembeli Terverifikasi (Anti-Fake Reviews)</h2>
-                <p className="text-sm text-gray-500 mt-1">Hanya pembeli yang sudah menyelesaikan pembayarannya (status completed) via Pi Network Escrow yang dapat mengisi form ulasan di bawah ini.</p>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <ProductReviewsList />
-                <ReviewForm productId="example-uuid" orderId="order-completed-uuid" />
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="fade-in-container">
-            <CartPage />
-          </div>
-        )}
+          <section className="mt-12 pt-8 border-t border-gray-200">
+            <div className="mb-6">
+              <span className="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Fitur Baru Keamanan Ulasan</span>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">Ulasan Pembeli Terverifikasi (Anti-Fake Reviews)</h2>
+              <p className="text-sm text-gray-500 mt-1">Hanya pembeli yang sudah menyelesaikan pembayarannya (status completed) via Pi Network Escrow yang dapat mengisi form ulasan di bawah ini.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <ProductReviewsList />
+              <ReviewForm productId="example-uuid" orderId="order-completed-uuid" />
+            </div>
+          </section>
+        </div>
       </main>
 
       {showToast && (
@@ -97,15 +77,12 @@ export default function Page() {
             <h4 className="font-bold text-gray-900 text-sm">Produk Ditambahkan</h4>
             <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{toastMessage}</p>
             <div className="mt-2.5 flex gap-3">
-              <button 
-                onClick={() => {
-                  setCurrentView('cart');
-                  setShowToast(false);
-                }} 
+              <a 
+                href="/cart"
                 className="text-white bg-brand-red hover:bg-rose-700 text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors shadow-sm"
               >
                 Lihat Keranjang
-              </button>
+              </a>
               <button 
                 onClick={() => setShowToast(false)} 
                 className="text-gray-500 hover:text-gray-800 text-[11px] font-medium px-2 py-1.5 transition-colors"
@@ -119,3 +96,4 @@ export default function Page() {
     </div>
   );
 }
+
