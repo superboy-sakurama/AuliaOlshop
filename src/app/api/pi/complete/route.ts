@@ -3,74 +3,84 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
-    const { paymentId, txid } = await request.json();
+    // 1. Menerima Payload dari sisi klien (Frontend)
+    const { paymentId, txid, orderId } = await request.json();
 
-    if (!paymentId || !txid) {
-      return NextResponse.json({ error: 'paymentId dan txid wajib dikirimkan' }, { status: 400 });
+    if (!paymentId || !txid || !orderId) {
+      return NextResponse.json(
+        { error: 'paymentId, txid, dan orderId wajib dikirimkan dalam request body' },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.PI_API_KEY;
     if (!apiKey) {
       console.warn("PI_API_KEY tidak ditemukan di environment variables");
-      return NextResponse.json({ error: 'Konfigurasi PI_API_KEY belum diatur di server' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Konfigurasi PI_API_KEY belum diatur di server' },
+        { status: 500 }
+      );
     }
 
-    // Menginformasikan penyelesaian transaksi ke jaringan Pi
-    const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
+    // 2. Validasi ke Blockchain Pi secara aman
+    const piResponse = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ txid })
+      body: JSON.stringify({ txid }) // Pi API mengharuskan parameter txid untuk finalisasi
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    // 3. Cek Status Panggilan Pi API
+    if (!piResponse.ok) {
+      const errorData = await piResponse.json().catch(() => ({}));
       console.error('Pi API Complete Error:', errorData);
-      return NextResponse.json({ error: 'Gagal menyelesaikan pembayaran di Jaringan Pi' }, { status: response.status });
+      throw new Error(`Gagal menyelesaikan pembayaran Pi: ${errorData.message || piResponse.statusText}`);
     }
 
-    const paymentData = await response.json();
-    
-    // Pi Network mengembalikan struktur data pembayaran yang berisi metadata
-    // yang sudah kita sertakan pada Frontend (CheckoutButton.tsx)
-    const orderId = paymentData?.metadata?.order_id;
-    
-    if (orderId) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const paymentData = await piResponse.json();
 
-      if (supabaseUrl && supabaseServiceKey) {
-        // Menginisialisasi Supabase Client dengan Service Role Key 
-        // yang secara aman berjalan di backend dan memotong batasan RLS
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-        // Memanggil RPC Supabase untuk memproses escrow dan komisi MLM secara aman (ACID Transaction)
-        const { error: rpcError } = await supabase.rpc('process_marketplace_escrow', {
-          order_id_param: orderId
-        });
-
-        if (rpcError) {
-          console.error('Supabase RPC Error (Process Escrow):', rpcError);
-          return NextResponse.json({ error: 'Gagal memproses escrow dan MLM' }, { status: 500 });
-        }
-        
-        // Update txid (bila diperlukan secara terpisah atau bisa dimasukkan ke dalam RPC jika modifikasi lebih lanjut)
-        const { error: updateError } = await supabase
-          .from('transactions')
-          .update({ txid: txid })
-          .eq('id', orderId); // Asumsi id pesanan di tabel adalah id
-      } else {
-        console.warn('Lewati integrasi Database Supabase: SUPABASE_SERVICE_ROLE_KEY atau URL tidak ditemukan.');
-      }
-    } else {
-      console.warn(`Pembayaran dengan paymentId ${paymentId} tidak menyertakan order_id di metadata.`);
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Kredensial Supabase (URL atau Service Role Key) tidak dikonfigurasi.");
     }
 
+    // 4. Inisialisasi Admin Supabase dengan Service Role Key
+    // Hal ini sangat penting untuk dapat mengeksekusi RPC yang memiliki bypass RLS
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 5. Tarik Pelatuk RPC "process_marketplace_escrow"
+    const { error: rpcError } = await supabase.rpc('process_marketplace_escrow', {
+      order_id_param: orderId
+    });
+
+    if (rpcError) {
+      console.error('Supabase RPC Error (Process Escrow):', rpcError);
+      throw new Error(`Gagal memproses escrow dan MLM: ${rpcError.message}`);
+    }
+
+    // Mengupdate txid pesanan sebagai cadangan pelacakan tambahan
+    const { error: updateError } = await supabase
+      .from('transactions')
+      .update({ txid: txid })
+      .eq('id', orderId);
+
+    if (updateError) {
+      console.warn('Gagal mengupdate txid di tabel transactions, namun dana seharusnya sudah aman tereksekusi RPC.', updateError);
+    }
+
+    // 6. Return 200 OK
     return NextResponse.json({ success: true, payment: paymentData });
+
   } catch (error: any) {
+    // Error Handling komprehensif
     console.error('API Complete Exception:', error);
-    return NextResponse.json({ error: 'Terjadi kesalahan sistem internal', details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Terjadi kesalahan sistem internal', details: error.message },
+      { status: 500 }
+    );
   }
 }

@@ -66,7 +66,7 @@ export default function CheckoutButton({ amount, orderId, itemCount, onSuccess }
             const res = await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid })
+              body: JSON.stringify({ paymentId, txid, orderId })
             });
             if (!res.ok) {
               console.error('Server gagal memproses penyelesaian pembayaran.');
