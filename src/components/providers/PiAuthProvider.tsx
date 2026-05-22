@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import Script from 'next/script';
+import { registerOrLoginUser } from '../../app/actions/authActions';
 
 // Definisikan struktur data user dari Pi Network
 interface PiUser {
@@ -51,11 +52,29 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
           }
         });
         
-        setUser({
+        const piUserData = {
           username: authResults.user.username,
           accessToken: authResults.accessToken,
           uid: authResults.user.uid
-        });
+        };
+
+        setUser(piUserData);
+
+        // -- Baca Pending Referral Code (MLM Tracker) --
+        let referralCode = null;
+        if (typeof window !== 'undefined') {
+          referralCode = localStorage.getItem('pendingReferral');
+        }
+
+        // Jalankan sinkronisasi Server Action Next.js di latar belakang
+        const result = await registerOrLoginUser(piUserData, referralCode);
+
+        // Jika registrasi sukses & referral dikirim, kita bisa berishkan localStorage
+        if (result.success && referralCode) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('pendingReferral');
+          }
+        }
         
       } else {
         throw new Error("Pi SDK belum terinisialisasi atau tidak ditemukan.");
