@@ -46,27 +46,21 @@ export async function POST(request: Request) {
         // yang secara aman berjalan di backend dan memotong batasan RLS
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // a. Mengubah status pesanan di tabel "transactions" menjadi "Selesai"
-        const { error: updateError } = await supabase
-          .from('transactions')
-          .update({ 
-            status: 'Selesai', 
-            txid: txid 
-          })
-          .eq('order_id', orderId);
-
-        if (updateError) {
-          console.error('Supabase Update Error (transactions):', updateError);
-        }
-
-        // b. Memanggil RPC Supabase untuk membagikan bonus/komisi MLM (Logic otomatis dari database PostgreSQL)
-        const { error: rpcError } = await supabase.rpc('distribute_mlm_commission', {
-          p_order_id: orderId
+        // Memanggil RPC Supabase untuk memproses escrow dan komisi MLM secara aman (ACID Transaction)
+        const { error: rpcError } = await supabase.rpc('process_marketplace_escrow', {
+          order_id_param: orderId
         });
 
         if (rpcError) {
-          console.error('Supabase RPC Error (MLM Commission):', rpcError);
+          console.error('Supabase RPC Error (Process Escrow):', rpcError);
+          return NextResponse.json({ error: 'Gagal memproses escrow dan MLM' }, { status: 500 });
         }
+        
+        // Update txid (bila diperlukan secara terpisah atau bisa dimasukkan ke dalam RPC jika modifikasi lebih lanjut)
+        const { error: updateError } = await supabase
+          .from('transactions')
+          .update({ txid: txid })
+          .eq('id', orderId); // Asumsi id pesanan di tabel adalah id
       } else {
         console.warn('Lewati integrasi Database Supabase: SUPABASE_SERVICE_ROLE_KEY atau URL tidak ditemukan.');
       }
