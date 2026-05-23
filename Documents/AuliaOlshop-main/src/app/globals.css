@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-red: #E11D48;
+  --color-brand-white: #FFFFFF;
+  --color-purple-shadow: rgba(147, 51, 234, 0.4);
+}
+
+@layer utilities {
+  .shadow-purple-glow {
+    box-shadow: 0 10px 30px -10px var(--color-purple-shadow), 0 0 15px -3px var(--color-purple-shadow);
+  }
+  .shadow-purple-silhouette {
+    box-shadow: 0 4px 20px -2px var(--color-purple-shadow);
+  }
+  .text-shadow-purple {
+    text-shadow: 0 2px 10px var(--color-purple-shadow);
+  }
+}
