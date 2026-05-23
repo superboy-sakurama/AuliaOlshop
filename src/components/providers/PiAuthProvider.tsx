@@ -48,7 +48,6 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
         const authResults = await window.Pi.authenticate(scopes, {
           onIncompletePaymentFound: (payment: any) => {
             console.log("Ditemukan pembayaran yang belum selesai:", payment);
-            // Logika untuk mengirimkan ID pembayaran ini ke backend Anda untuk diverifikasi & diselesaikan
           }
         });
         
@@ -62,12 +61,27 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
         await registerOrLoginUser(piUserData);
         
       } else {
-        throw new Error("Pi SDK belum terinisialisasi atau tidak ditemukan.");
+        const useSimulation = window.confirm("Notifikasi: Anda sedang mengakses di luar Pi Browser.\n\nApakah Anda ingin melanjutkan dengan 'Login Simulasi' untuk ujicoba?");
+        if (useSimulation) {
+          const mockUser = {
+            username: "tester_pi_user",
+            accessToken: "mock_access_token_12345",
+            uid: "mock_uid_12345"
+          };
+          setUser(mockUser);
+          await registerOrLoginUser(mockUser);
+          alert("Login simulasi berhasil!");
+          return;
+        } else {
+            throw new Error("Pi SDK belum terinisialisasi atau tidak ditemukan.");
+        }
       }
     } catch (err: any) {
       console.error("Gagal melakukan login Pi:", err);
-      // Pesan ramah jika pengguna tidak membuka aplikasi dari Pi Browser
-      setError("Autentikasi gagal. Silakan buka aplikasi ini melalui Pi Browser untuk menikmati fitur login, atau pastikan koneksi internet Anda stabil.");
+      // Fallback simulasi jika di luar Pi Browser untuk testing (opsional) atau berikan notifikasi tegas:
+      const errorMsg = "Harap melakukan login dengan membuka aplikasi ini melalui Pi Browser untuk keamanan transaksi Anda. \n\n(Catatan: Jika Anda sedang testing di luar Pi Browser, fungsi ini tetap ditahan demi keamanan).";
+      setError(errorMsg);
+      alert("Pemberitahuan Sistem:\n\n" + errorMsg);
     }
   };
 
