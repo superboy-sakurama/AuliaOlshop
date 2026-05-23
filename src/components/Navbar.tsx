@@ -86,7 +86,7 @@ export default function Navbar({ cartCount = 2 }: NavbarProps) {
                 </button>
               ) : (
                 <button 
-                  onClick={loginPiUser}
+                  onClick={() => loginPiUser()}
                   className="flex items-center gap-2 bg-white text-brand-red px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors focus:outline-none shadow-purple-glow text-sm font-bold"
                 >
                   Login Pi

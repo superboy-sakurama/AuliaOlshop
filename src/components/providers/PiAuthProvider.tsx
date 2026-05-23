@@ -15,7 +15,7 @@ interface PiUser {
 interface PiAuthContextType {
   user: PiUser | null;
   isAuthenticated: boolean;
-  loginPiUser: () => Promise<void>;
+  loginPiUser: (isAuto?: boolean) => Promise<void>;
   error: string | null;
 }
 
@@ -33,7 +33,7 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<PiUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loginPiUser = async () => {
+  const loginPiUser = async (isAuto = false) => {
     try {
       setError(null);
       
@@ -61,6 +61,7 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
         await registerOrLoginUser(piUserData);
         
       } else {
+        if (isAuto) return; // Silent fail if auto-login outside Pi Browser
         const useSimulation = window.confirm("Notifikasi: Anda sedang mengakses di luar Pi Browser.\n\nApakah Anda ingin melanjutkan dengan 'Login Simulasi' untuk ujicoba?");
         if (useSimulation) {
           const mockUser = {
@@ -79,11 +80,21 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       console.error("Gagal melakukan login Pi:", err);
       // Fallback simulasi jika di luar Pi Browser untuk testing (opsional) atau berikan notifikasi tegas:
-      const errorMsg = "Harap melakukan login dengan membuka aplikasi ini melalui Pi Browser untuk keamanan transaksi Anda. \n\n(Catatan: Jika Anda sedang testing di luar Pi Browser, fungsi ini tetap ditahan demi keamanan).";
-      setError(errorMsg);
-      alert("Pemberitahuan Sistem:\n\n" + errorMsg);
+      if (!isAuto) {
+        const errorMsg = "Harap melakukan login dengan membuka aplikasi ini melalui Pi Browser untuk keamanan transaksi Anda. \n\n(Catatan: Jika Anda sedang testing di luar Pi Browser, fungsi ini tetap ditahan demi keamanan).";
+        setError(errorMsg);
+        alert("Pemberitahuan Sistem:\n\n" + errorMsg);
+      }
     }
   };
+
+  // Optional: Auto-login on mount if window.Pi is somehow already available 
+  // (e.g. fast refresh or script already cached)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.Pi && !user) {
+      loginPiUser(true);
+    }
+  }, []);
 
   return (
     <PiAuthContext.Provider value={{ user, isAuthenticated: !!user, loginPiUser, error }}>
@@ -97,6 +108,8 @@ export default function PiAuthProvider({ children }: { children: ReactNode }) {
         strategy="afterInteractive" 
         onLoad={() => {
           console.log("Pi SDK berhasil dimuat");
+          // Otomatis login saat SDK termuat secara silent
+          loginPiUser(true);
         }}
       />
       {children}
