@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { usePiAuth } from '@/components/providers/PiAuthProvider';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -28,7 +29,43 @@ export default function SellerLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuthenticated, isSeller, isLoading } = usePiAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Proteksi route - redirect jika tidak seller atau tidak login
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !isSeller)) {
+      router.replace('/');
+    }
+  }, [isLoading, isAuthenticated, isSeller, router]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Memverifikasi akses penjual...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Access denied - tidak ditampilkan karena akan redirect, tapi safety measure
+  if (!isAuthenticated || !isSeller) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-md border border-slate-100">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Akses Ditolak</h1>
+          <p className="text-slate-600 mb-4">Halaman ini hanya tersedia untuk penjual terdaftar.</p>
+          <Link href="/" className="inline-block bg-red-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-red-700 transition-all">
+            Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Daftar Menu Utama Sesuai Gambar Antarmuka Aulia Olshop
   const menuItems: SidebarItem[] = [
@@ -40,10 +77,10 @@ export default function SellerLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-slate-800 antialiased flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-800 antialiased flex flex-col font-sans">
       
       {/* HEADER ATAS (NAVBAR SELLER CENTRE) */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 shadow-sm px-4 lg:px-8 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm px-4 lg:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Tombol Hamburger untuk Layar Mobile */}
           <button 
